@@ -1,48 +1,13 @@
 const express = require("express");
 const mysql = require("mysql2");
-const dotenv = require("dotenv");
 const bodyParser = require("body-parser");
-
-// Load environment variables
-const result = dotenv.config();
-if (result.error) {
-  console.error('Error loading .env file:', result.error);
-}
-
-// Validate required environment variables
-const requiredEnvVars = ['DB_HOST', 'DB_USER', 'DB_PASS', 'DB_NAME'];
-const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
-if (missingEnvVars.length > 0) {
-  console.error('Missing required environment variables:', missingEnvVars.join(', '));
-  console.error('Please ensure these environment variables are set in your deployment environment.');
-  process.exit(1);
-}
-
-// Log database configuration (without sensitive data)
-console.log('Database Configuration:', {
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  database: process.env.DB_NAME,
-  port: process.env.port || 3306,
-  environment: process.env.NODE_ENV
-});
+const { dbConfig } = require('./config');
 
 const app = express();
 app.use(bodyParser.json());
 
 // MySQL Database Connection
-const db = mysql.createConnection({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASS,
-  database: process.env.DB_NAME,
-  port: parseInt(process.env.port) || 3306,
-  connectTimeout: 10000,
-  multipleStatements: true,
-  ssl: process.env.NODE_ENV === 'production' ? {
-    rejectUnauthorized: false
-  } : undefined
-});
+const db = mysql.createConnection(dbConfig);
 
 db.connect((err) => {
   if (err) {

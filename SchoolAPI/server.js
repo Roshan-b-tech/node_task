@@ -13,6 +13,14 @@ if (missingEnvVars.length > 0) {
   process.exit(1);
 }
 
+// Log database configuration (without sensitive data)
+console.log('Database Configuration:', {
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  database: process.env.DB_NAME,
+  port: process.env.port || 3306
+});
+
 const app = express();
 app.use(bodyParser.json());
 
@@ -22,16 +30,26 @@ const db = mysql.createConnection({
   user: process.env.DB_USER,
   password: process.env.DB_PASS,
   database: process.env.DB_NAME,
-  port: process.env.port || 3306,
-  connectTimeout: 10000, // 10 seconds timeout
+  port: parseInt(process.env.port) || 3306,
+  connectTimeout: 10000,
+  multipleStatements: true,
+  ssl: {
+    rejectUnauthorized: false
+  }
 });
 
 db.connect((err) => {
   if (err) {
-    console.error("Database connection failed: " + err.stack);
+    console.error("Database connection failed:", {
+      message: err.message,
+      code: err.code,
+      errno: err.errno,
+      sqlState: err.sqlState,
+      sqlMessage: err.sqlMessage
+    });
     return;
   }
-  console.log("Connected to MySQL database.");
+  console.log("Connected to MySQL database successfully.");
 });
 
 // Create Schools Table if not exists

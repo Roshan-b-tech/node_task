@@ -14,8 +14,6 @@ const db = mysql.createConnection({
   user: process.env.DB_USER,
   password: process.env.DB_PASS,
   database: process.env.DB_NAME,
-  port: 3306,              // Default MySQL port
-    connectTimeout: 10000  
 });
 
 db.connect((err) => {
@@ -102,8 +100,5 @@ app.get("/listSchools", (req, res) => {
 });
 
 // Start server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on port ${PORT}`);
-});
-
+const PORT = process.env.PORT || 3306;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

@@ -5,6 +5,14 @@ const bodyParser = require("body-parser");
 
 dotenv.config();
 
+// Validate required environment variables
+const requiredEnvVars = ['DB_HOST', 'DB_USER', 'DB_PASS', 'DB_NAME'];
+const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
+if (missingEnvVars.length > 0) {
+  console.error('Missing required environment variables:', missingEnvVars.join(', '));
+  process.exit(1);
+}
+
 const app = express();
 app.use(bodyParser.json());
 
@@ -14,6 +22,8 @@ const db = mysql.createConnection({
   user: process.env.DB_USER,
   password: process.env.DB_PASS,
   database: process.env.DB_NAME,
+  port: process.env.port || 3306,
+  connectTimeout: 10000, // 10 seconds timeout
 });
 
 db.connect((err) => {

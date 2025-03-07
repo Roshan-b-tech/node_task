@@ -31,10 +31,12 @@ const dbConfig = {
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-  connectTimeout: 10000,
+  connectTimeout: 60000, // Increased timeout to 60 seconds
+  acquireTimeout: 60000, // Added acquire timeout
+  timeout: 60000, // Added general timeout
   multipleStatements: true,
   enableKeepAlive: true,
-  keepAliveInitialDelay: 0,
+  keepAliveInitialDelay: 10000,
   ssl: {
     rejectUnauthorized: false
   }
@@ -47,7 +49,12 @@ console.log('Final Database Configuration:', {
   database: dbConfig.database,
   port: dbConfig.port,
   environment: process.env.NODE_ENV,
-  ssl: 'enabled'
+  ssl: 'enabled',
+  timeouts: {
+    connect: dbConfig.connectTimeout,
+    acquire: dbConfig.acquireTimeout,
+    general: dbConfig.timeout
+  }
 });
 
 module.exports = {

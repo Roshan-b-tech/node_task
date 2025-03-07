@@ -129,46 +129,95 @@ app.post("/addSchool", (req, res) => {
 });
 
 // ** List Schools API (Sorted by Distance) **
-app.get("/listSchools", (req, res) => {
+app.get("/listSchools", async (req, res) => {
   const { latitude, longitude } = req.query;
 
   if (!latitude || !longitude) {
     return res.status(400).json({ error: "Latitude and Longitude are required" });
   }
 
-  const sql = "SELECT * FROM schools";
-  pool.query(sql, (err, schools) => {
-    if (err) {
-      console.error("Error fetching schools:", err);
-      return res.status(500).json({ error: "Database error" });
-    }
+  try {
+    // Test database connection first
+    await testConnection();
 
-    // Haversine formula to calculate distance
-    const haversineDistance = (lat1, lon1, lat2, lon2) => {
-      const toRad = (value) => (value * Math.PI) / 180;
-      const R = 6371; // Earth radius in km
+    const sql = "SELECT * FROM schools";
+    pool.query(sql, (err, schools) => {
+      if (err) {
+        console.error("Error fetching schools:", {
+          message: err.message,
+          code: err.code,
+          errno: err.errno,
+          sqlState: err.sqlState,
+          sqlMessage: err.sqlMessage
+        });
+        return res.status(500).json({ 
+          error: "Database error", 
+          details: err.message,
+          dbConfig: {
+            host: dbConfig.host,
+            user: dbConfig.user,
+            database: dbConfig.database,
+            port: dbConfig.port
+          }
+        });
+      }
 
-      const dLat = toRad(lat2 - lat1);
-      const dLon = toRad(lon2 - lon1);
-      const a =
-        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-        Math.sin(dLon / 2) * Math.sin(dLon / 2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      if (!schools || schools.length === 0) {
+        return res.status(200).json({ 
+          message: "No schools found",
+          schools: [],
+          query: { latitude, longitude }
+        });
+      }
 
-      return R * c; // Distance in km
-    };
+      // Haversine formula to calculate distance
+      const haversineDistance = (lat1, lon1, lat2, lon2) => {
+        const toRad = (value) => (value * Math.PI) / 180;
+        const R = 6371; // Earth radius in km
 
-    // Sort schools by distance
-    const sortedSchools = schools
-      .map((school) => ({
-        ...school,
-        distance: haversineDistance(latitude, longitude, school.latitude, school.longitude),
-      }))
-      .sort((a, b) => a.distance - b.distance);
+        const dLat = toRad(lat2 - lat1);
+        const dLon = toRad(lon2 - lon1);
+        const a =
+          Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+          Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+          Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-    res.status(200).json({ schools: sortedSchools });
-  });
+        return R * c; // Distance in km
+      };
+
+      // Sort schools by distance
+      const sortedSchools = schools
+        .map((school) => ({
+          ...school,
+          distance: haversineDistance(
+            parseFloat(latitude), 
+            parseFloat(longitude), 
+            school.latitude, 
+            school.longitude
+          ),
+        }))
+        .sort((a, b) => a.distance - b.distance);
+
+      res.status(200).json({ 
+        schools: sortedSchools,
+        total: sortedSchools.length,
+        query: { latitude, longitude }
+      });
+    });
+  } catch (error) {
+    console.error("Error in listSchools:", error);
+    return res.status(500).json({ 
+      error: "Server error", 
+      message: error.message,
+      dbConfig: {
+        host: dbConfig.host,
+        user: dbConfig.user,
+        database: dbConfig.database,
+        port: dbConfig.port
+      }
+    });
+  }
 });
 
 // Start server

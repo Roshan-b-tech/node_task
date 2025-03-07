@@ -13,8 +13,13 @@ const dbConfig = {
   password: process.env.DB_PASS || 'Roshan@7842',
   database: process.env.DB_NAME || 'schools',
   port: parseInt(process.env.port) || 3306,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
   connectTimeout: 10000,
   multipleStatements: true,
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 0,
   ssl: process.env.NODE_ENV === 'production' ? {
     rejectUnauthorized: false
   } : undefined
@@ -26,7 +31,8 @@ console.log('Database Configuration:', {
   user: dbConfig.user,
   database: dbConfig.database,
   port: dbConfig.port,
-  environment: process.env.NODE_ENV
+  environment: process.env.NODE_ENV,
+  ssl: dbConfig.ssl ? 'enabled' : 'disabled'
 });
 
 module.exports = {

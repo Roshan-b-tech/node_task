@@ -31,9 +31,7 @@ const dbConfig = {
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-  connectTimeout: 60000, // Increased timeout to 60 seconds
-  acquireTimeout: 60000, // Added acquire timeout
-  timeout: 60000, // Added general timeout
+  connectTimeout: 60000, // 60 seconds
   multipleStatements: true,
   enableKeepAlive: true,
   keepAliveInitialDelay: 10000,
@@ -51,9 +49,7 @@ console.log('Final Database Configuration:', {
   environment: process.env.NODE_ENV,
   ssl: 'enabled',
   timeouts: {
-    connect: dbConfig.connectTimeout,
-    acquire: dbConfig.acquireTimeout,
-    general: dbConfig.timeout
+    connect: dbConfig.connectTimeout
   }
 });
 

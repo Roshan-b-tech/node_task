@@ -47,6 +47,14 @@ app.get("/", (req, res) => {
 // Function to test database connection
 const testConnection = () => {
   return new Promise((resolve, reject) => {
+    console.log('Attempting database connection with config:', {
+      host: dbConfig.host,
+      user: dbConfig.user,
+      database: dbConfig.database,
+      port: dbConfig.port,
+      ssl: dbConfig.ssl ? 'enabled' : 'disabled'
+    });
+
     pool.getConnection((err, connection) => {
       if (err) {
         console.error("Database connection failed:", {
@@ -54,11 +62,13 @@ const testConnection = () => {
           code: err.code,
           errno: err.errno,
           sqlState: err.sqlState,
-          sqlMessage: err.sqlMessage
+          sqlMessage: err.sqlMessage,
+          stack: err.stack
         });
         reject(err);
         return;
       }
+      console.log('Successfully connected to database');
       connection.release();
       resolve();
     });
@@ -72,7 +82,7 @@ const initializeDatabase = async () => {
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      console.log(`Attempting to connect to database (attempt ${attempt}/${maxRetries})...`);
+      console.log(`\nAttempting to connect to database (attempt ${attempt}/${maxRetries})...`);
       await testConnection();
       console.log("Connected to MySQL database successfully.");
 
@@ -87,7 +97,11 @@ const initializeDatabase = async () => {
         )`,
         (err) => {
           if (err) {
-            console.error("Error creating table:", err);
+            console.error("Error creating table:", {
+              message: err.message,
+              code: err.code,
+              sqlState: err.sqlState
+            });
           } else {
             console.log("Schools table created or already exists.");
           }
@@ -95,7 +109,12 @@ const initializeDatabase = async () => {
       );
       return;
     } catch (error) {
-      console.error(`Connection attempt ${attempt} failed:`, error.message);
+      console.error(`Connection attempt ${attempt} failed:`, {
+        message: error.message,
+        code: error.code,
+        errno: error.errno,
+        sqlState: error.sqlState
+      });
       if (attempt < maxRetries) {
         console.log(`Retrying in ${retryDelay/1000} seconds...`);
         await new Promise(resolve => setTimeout(resolve, retryDelay));

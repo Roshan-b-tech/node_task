@@ -9,6 +9,41 @@ app.use(bodyParser.json());
 // Create MySQL connection pool
 const pool = mysql.createPool(dbConfig);
 
+// Root route - API documentation
+app.get("/", (req, res) => {
+  res.json({
+    status: "API is running",
+    version: "1.0.0",
+    endpoints: {
+      root: {
+        method: "GET",
+        path: "/",
+        description: "Shows API documentation"
+      },
+      addSchool: {
+        method: "POST",
+        path: "/addSchool",
+        description: "Add a new school",
+        body: {
+          name: "string (required)",
+          address: "string (required)",
+          latitude: "number (required)",
+          longitude: "number (required)"
+        }
+      },
+      listSchools: {
+        method: "GET",
+        path: "/listSchools",
+        description: "Get list of schools sorted by distance",
+        queryParams: {
+          latitude: "number (required)",
+          longitude: "number (required)"
+        }
+      }
+    }
+  });
+});
+
 // Function to test database connection
 const testConnection = () => {
   return new Promise((resolve, reject) => {
@@ -137,5 +172,8 @@ app.get("/listSchools", (req, res) => {
 });
 
 // Start server
-const PORT = process.env.PORT || 3306;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  console.log(`Environment: ${process.env.NODE_ENV}`);
+});
